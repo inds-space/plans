@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{{PLAN_TITLE}}</title>
+    <style>
+      :root { color-scheme: dark; --bg:#090d18; --panel:#11182a; --line:#293450; --text:#eef2ff; --muted:#9ba8c7; --accent:#71e1bc; --accent2:#89a8ff; }
+      * { box-sizing:border-box; }
+      body { margin:0; background:radial-gradient(circle at 80% -10%,#1b3157 0,transparent 32rem),var(--bg); color:var(--text); font:15px/1.65 Inter,ui-sans-serif,system-ui,sans-serif; }
+      main { width:min(1100px,calc(100% - 32px)); margin:0 auto; padding:64px 0 96px; }
+      header { padding:32px; border:1px solid var(--line); border-radius:24px; background:rgba(17,24,42,.88); }
+      .eyebrow { color:var(--accent); font-size:12px; font-weight:800; letter-spacing:.16em; text-transform:uppercase; }
+      h1 { max-width:850px; margin:.25em 0; font-size:clamp(2.3rem,6vw,5rem); line-height:1; letter-spacing:-.055em; }
+      h2 { margin:0 0 14px; font-size:1.4rem; }
+      p { color:var(--muted); }
+      .meta,.grid { display:grid; gap:16px; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
+      .meta { margin-top:28px; }
+      .card { padding:24px; border:1px solid var(--line); border-radius:18px; background:var(--panel); }
+      section { margin-top:18px; }
+      .label { color:var(--muted); font-size:12px; text-transform:uppercase; letter-spacing:.12em; }
+      .value { margin-top:4px; font-weight:750; }
+      ol,ul { padding-left:1.4rem; }
+      li + li { margin-top:8px; }
+      code { color:var(--accent); background:#080c16; border:1px solid #202a42; border-radius:6px; padding:.12em .38em; }
+      .phase { display:grid; grid-template-columns:52px 1fr; gap:18px; }
+      .number { display:grid; place-items:center; width:44px; height:44px; border-radius:50%; color:#08110e; background:var(--accent); font-weight:900; }
+      .risk { border-left:3px solid #ffbd6f; }
+      @media (max-width:600px) { main{width:min(100% - 20px,1100px);padding-top:20px} header,.card{padding:20px}.phase{grid-template-columns:1fr}.number{width:36px;height:36px} }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div class="eyebrow">Implementation plan · {{AGENT}}</div>
+        <h1>{{PLAN_TITLE}}</h1>
+        <p>{{OUTCOME_SUMMARY}}</p>
+        <div class="meta">
+          <div><div class="label">Status</div><div class="value">Proposed</div></div>
+          <div><div class="label">Scope</div><div class="value">{{SCOPE}}</div></div>
+          <div><div class="label">Updated</div><div class="value">{{DATE}}</div></div>
+        </div>
+      </header>
+
+      <section class="grid">
+        <article class="card"><h2>Outcome</h2><p>{{OUTCOME}}</p></article>
+        <article class="card"><h2>Constraints</h2><ul><li>{{CONSTRAINT}}</li></ul></article>
+      </section>
+
+      <section class="card">
+        <h2>Architecture</h2>
+        <p>{{ARCHITECTURE}}</p>
+      </section>
+
+      <section class="card phase">
+        <div class="number">1</div>
+        <div><h2>{{PHASE_ONE}}</h2><p>{{PHASE_ONE_DETAILS}}</p></div>
+      </section>
+      <section class="card phase">
+        <div class="number">2</div>
+        <div><h2>{{PHASE_TWO}}</h2><p>{{PHASE_TWO_DETAILS}}</p></div>
+      </section>
+      <section class="card phase">
+        <div class="number">3</div>
+        <div><h2>{{PHASE_THREE}}</h2><p>{{PHASE_THREE_DETAILS}}</p></div>
+      </section>
+
+      <section class="grid">
+        <article class="card"><h2>Validation</h2><ul><li>{{VALIDATION}}</li></ul></article>
+        <article class="card risk"><h2>Risks</h2><ul><li>{{RISK}}</li></ul></article>
+      </section>
+    </main>
+  </body>
+</html>
+

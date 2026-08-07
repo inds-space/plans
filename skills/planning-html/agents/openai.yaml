@@ -1,0 +1,5 @@
+interface:
+  display_name: "Planning HTML"
+  short_description: "Create and publish rich HTML implementation plans"
+  default_prompt: "Use $planning-html to create and publish an implementation plan."
+

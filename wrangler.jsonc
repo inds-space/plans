@@ -1,0 +1,43 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "plans",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-07",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
+  "preview_urls": false,
+  "routes": [
+    {
+      "pattern": "plans.inds.space",
+      "custom_domain": true
+    }
+  ],
+  "vars": {
+    "PUBLIC_BASE_URL": "https://plans.inds.space",
+    "MAX_UPLOAD_BYTES": "5242880"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "plans-db",
+      "database_id": "968ea681-2bc0-4167-a3b8-44093e65fa28",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "STORAGE",
+      "bucket_name": "plans-storage"
+    }
+  ],
+  "observability": {
+    "enabled": true,
+    "logs": {
+      "head_sampling_rate": 1
+    },
+    "traces": {
+      "enabled": true,
+      "head_sampling_rate": 0.05
+    }
+  }
+}

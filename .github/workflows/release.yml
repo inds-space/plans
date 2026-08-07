@@ -1,0 +1,46 @@
+name: Release CLI
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - target: bun-linux-x64
+            asset: plan-linux-x64
+          - target: bun-linux-arm64
+            asset: plan-linux-arm64
+          - target: bun-windows-x64
+            asset: plan-windows-x64.exe
+          - target: bun-darwin-x64
+            asset: plan-darwin-x64
+          - target: bun-darwin-arm64
+            asset: plan-darwin-arm64
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: oven-sh/setup-bun@v2
+      - run: bun build cli/src/index.ts --compile --target=${{ matrix.target }} --outfile=dist/${{ matrix.asset }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset }}
+          path: dist/${{ matrix.asset }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true
