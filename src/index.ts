@@ -104,6 +104,28 @@ async function findPlan(
     .first<PlanRow>();
 }
 
+async function listPlans(env: CloudflareBindings, url: URL): Promise<Response> {
+  const requestedAgent = url.searchParams.get("agent");
+  const statement = requestedAgent
+    ? env.DB.prepare(
+        "SELECT id, agent, slug, object_key, version, created_at, updated_at FROM plans WHERE agent = ? ORDER BY updated_at DESC, slug ASC",
+      ).bind(parseAgent(requestedAgent))
+    : env.DB.prepare(
+        "SELECT id, agent, slug, object_key, version, created_at, updated_at FROM plans ORDER BY updated_at DESC, agent ASC, slug ASC",
+      );
+  const result = await statement.all<PlanRow>();
+  return json({
+    plans: result.results.map((plan) => ({
+      agent: plan.agent,
+      name: plan.slug,
+      version: plan.version,
+      createdAt: plan.created_at,
+      updatedAt: plan.updated_at,
+      url: canonicalUrl(env, plan.agent, plan.slug),
+    })),
+  });
+}
+
 async function createPlan(
   request: Request,
   env: CloudflareBindings,
@@ -301,9 +323,12 @@ async function route(
   }
 
   if (segments.join("/") === "api/v1/plans") {
+    if (request.method === "GET") {
+      return listPlans(env, url);
+    }
     return request.method === "POST"
       ? createPlan(request, env, url)
-      : methodNotAllowed(["POST"]);
+      : methodNotAllowed(["GET", "POST"]);
   }
 
   if (segments.length === 5 && segments.slice(0, 3).join("/") === "api/v1/plans") {

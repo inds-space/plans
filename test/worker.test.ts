@@ -87,6 +87,40 @@ describe("plans Worker", () => {
     await expect(viewed.text()).resolves.toBe(source);
   });
 
+  it("lists all plans and supports filtering by agent", async () => {
+    await resetBindings();
+    await publish("POST", "/api/v1/plans?agent=codex&name=one", "<h1>One</h1>");
+    await publish("POST", "/api/v1/plans?agent=claude&name=two", "<h1>Two</h1>");
+
+    const listed = await dispatch(new Request("http://localhost/api/v1/plans", {
+      headers: ACCESS_HEADERS,
+    }));
+    expect(listed.status).toBe(200);
+    const listedBody = await listed.json<{
+      plans: Array<{ agent: string; name: string; version: number }>;
+    }>();
+    expect(listedBody.plans.map(({ agent, name, version }) => ({ agent, name, version })))
+      .toEqual([
+        { agent: "claude", name: "two", version: 1 },
+        { agent: "codex", name: "one", version: 1 },
+      ]);
+
+    const filtered = await dispatch(new Request("http://localhost/api/v1/plans?agent=codex", {
+      headers: ACCESS_HEADERS,
+    }));
+    const filteredBody = await filtered.json<{
+      plans: Array<{ agent: string; name: string }>;
+    }>();
+    expect(filteredBody.plans.map(({ agent, name }) => ({ agent, name }))).toEqual([
+      { agent: "codex", name: "one" },
+    ]);
+
+    const invalid = await dispatch(new Request("http://localhost/api/v1/plans?agent=gemini", {
+      headers: ACCESS_HEADERS,
+    }));
+    expect(invalid.status).toBe(400);
+  });
+
   it("rejects duplicate create and preserves the existing plan", async () => {
     await resetBindings();
     await publish(

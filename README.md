@@ -15,9 +15,10 @@ The repository contains one Cloudflare Worker, one D1 database, one R2 bucket, a
 plan create <name> -claude|codex|antigravity [--file <path>]
 plan update <name> -claude|codex|antigravity [--file <path>]
 plan delete <name> -claude|codex|antigravity
+plan list [-claude|-codex|-antigravity]
 ```
 
-`create` and `update` discover `<name>.html` in the current directory. `--file` overrides discovery. Successful publication prints only the stable URL so agents can capture stdout directly.
+`create` and `update` discover `<name>.html` in the current directory. `--file` overrides discovery. Successful publication prints only the stable URL so agents can capture stdout directly. `list` prints every plan's agent, name, version, update time, and stable URL; pass an optional agent flag to filter the results.
 
 ## Authentication
 

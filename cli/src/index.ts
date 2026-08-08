@@ -5,7 +5,7 @@ import { homedir } from "node:os";
 import { basename, join, resolve } from "node:path";
 import { AGENTS, isAgent, PLAN_SLUG_PATTERN, type Agent } from "../../src/constants";
 
-const VERSION = "0.1.0";
+const VERSION = "0.2.0";
 const DEFAULT_BASE_URL = "https://plans.inds.space";
 const DEFAULT_MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
@@ -16,7 +16,7 @@ interface PlanConfig {
   apiToken?: string;
 }
 
-interface ParsedArgs {
+interface PlanArgs {
   command: "create" | "update" | "delete";
   name: string;
   agent: Agent;
@@ -24,11 +24,27 @@ interface ParsedArgs {
   yes: boolean;
 }
 
+interface ListArgs {
+  command: "list";
+  agent?: Agent;
+}
+
+type ParsedArgs = PlanArgs | ListArgs;
+
+interface PlanSummary {
+  agent: Agent;
+  name: string;
+  version: number;
+  updatedAt: string;
+  url: string;
+}
+
 interface ApiResult {
   error?: string;
   url?: string;
   version?: number;
   deleted?: boolean;
+  plans?: PlanSummary[];
 }
 
 function usage(): string {
@@ -38,6 +54,7 @@ Usage:
   plan create <name> -<agent> [--file <path>]
   plan update <name> -<agent> [--file <path>]
   plan delete <name> -<agent> [--yes]
+  plan list [-<agent>]
 
 Agents:
   ${AGENTS.map((agent) => `-${agent}`).join("  ")}
@@ -52,8 +69,20 @@ Authentication:
 
 function parseArgs(argv: readonly string[]): ParsedArgs {
   const [command, name, ...rest] = argv;
+  if (command === "list") {
+    let agent: Agent | undefined;
+    for (const argument of argv.slice(1)) {
+      if (argument.startsWith("-") && isAgent(argument.slice(1))) {
+        if (agent) throw new Error("Specify at most one agent");
+        agent = argument.slice(1) as Agent;
+        continue;
+      }
+      throw new Error(`Unknown argument: ${argument}`);
+    }
+    return { command, agent };
+  }
   if (command !== "create" && command !== "update" && command !== "delete") {
-    throw new Error("Expected create, update, or delete");
+    throw new Error("Expected create, update, delete, or list");
   }
   if (!name || !PLAN_SLUG_PATTERN.test(name)) {
     throw new Error(
@@ -155,7 +184,7 @@ async function isFile(path: string): Promise<boolean> {
   }
 }
 
-async function resolveHtmlFile(args: ParsedArgs): Promise<string> {
+async function resolveHtmlFile(args: PlanArgs): Promise<string> {
   if (args.file) {
     const explicit = resolve(args.file);
     if (!(await isFile(explicit))) throw new Error(`HTML file not found: ${explicit}`);
@@ -181,12 +210,61 @@ async function parseResponse(response: Response): Promise<ApiResult> {
   const payload: unknown = await response.json().catch(() => ({}));
   if (!payload || typeof payload !== "object" || Array.isArray(payload)) return {};
   const value = payload as Record<string, unknown>;
+  const plans = Array.isArray(value.plans)
+    ? value.plans.flatMap((candidate): PlanSummary[] => {
+        if (!candidate || typeof candidate !== "object" || Array.isArray(candidate)) return [];
+        const plan = candidate as Record<string, unknown>;
+        if (
+          typeof plan.agent !== "string" ||
+          !isAgent(plan.agent) ||
+          typeof plan.name !== "string" ||
+          typeof plan.version !== "number" ||
+          typeof plan.updatedAt !== "string" ||
+          typeof plan.url !== "string"
+        ) {
+          return [];
+        }
+        return [{
+          agent: plan.agent,
+          name: plan.name,
+          version: plan.version,
+          updatedAt: plan.updatedAt,
+          url: plan.url,
+        }];
+      })
+    : undefined;
   return {
     error: typeof value.error === "string" ? value.error : undefined,
     url: typeof value.url === "string" ? value.url : undefined,
     version: typeof value.version === "number" ? value.version : undefined,
     deleted: typeof value.deleted === "boolean" ? value.deleted : undefined,
+    plans,
   };
+}
+
+function formatPlans(plans: readonly PlanSummary[]): string {
+  if (plans.length === 0) return "No plans found.";
+  type OutputRow = [string, string, string, string, string];
+  const rows: OutputRow[] = [
+    ["AGENT", "NAME", "VERSION", "UPDATED", "URL"],
+    ...plans.map((plan): OutputRow => [
+      plan.agent,
+      plan.name,
+      `v${String(plan.version)}`,
+      plan.updatedAt,
+      plan.url,
+    ]),
+  ];
+  const width = (column: 0 | 1 | 2 | 3): number =>
+    Math.max(...rows.map((row) => row[column].length));
+  const widths = [width(0), width(1), width(2), width(3)] as const;
+  return rows.map((row) => [
+    row[0].padEnd(widths[0]),
+    row[1].padEnd(widths[1]),
+    row[2].padEnd(widths[2]),
+    row[3].padEnd(widths[3]),
+    row[4],
+  ].join("  ")).join("\n");
 }
 
 async function confirmDelete(name: string, agent: Agent): Promise<boolean> {
@@ -208,6 +286,18 @@ async function run(args: ParsedArgs): Promise<void> {
     "",
   );
   const headers = requestHeaders(config);
+
+  if (args.command === "list") {
+    const query = args.agent ? `?agent=${args.agent}` : "";
+    const response = await fetch(`${baseUrl}/api/v1/plans${query}`, { headers });
+    const result = await parseResponse(response);
+    if (!response.ok) {
+      throw new Error(result.error ?? `List failed with HTTP ${String(response.status)}`);
+    }
+    if (!result.plans) throw new Error("Server response did not include a plans list");
+    process.stdout.write(`${formatPlans(result.plans)}\n`);
+    return;
+  }
 
   if (args.command === "delete") {
     if (!args.yes && !(await confirmDelete(args.name, args.agent))) {
