@@ -20,7 +20,7 @@
     {
       "binding": "DB",
       "database_name": "plans-db",
-      "database_id": "968ea681-2bc0-4167-a3b8-44093e65fa28",
+      "database_id": "<YOUR_D1_DATABASE_ID>",
       "migrations_dir": "migrations"
     }
   ],
