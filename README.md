@@ -1,6 +1,29 @@
-# Plan CLI
+# Plans
 
-Authenticated static HTML plans for Claude, Codex, and Antigravity.
+> [!IMPORTANT]
+> **This project has been superseded by [inds-space/artifacts](https://github.com/inds-space/artifacts) and is no longer maintained.**
+>
+> Artifacts is the successor to Plans. It expands the original plan-publishing workflow into a general self-hosted publishing system for agent-generated plans, reports, diagrams, prototypes, and other browser-renderable artifacts.
+
+This repository is preserved as a historical archive of the original Plans project.
+
+## Successor
+
+Use **[inds-space/artifacts](https://github.com/inds-space/artifacts)** for new installations and development.
+
+Artifacts provides:
+
+- a general `artifacts` CLI instead of the plan-specific CLI;
+- support for multiple artifact types;
+- stable, versioned artifact URLs;
+- Cloudflare Workers, D1, R2, and Access self-hosting;
+- agent skills for publishing generated artifacts.
+
+---
+
+## Historical documentation
+
+Plans was an authenticated static HTML publishing service for Claude, Codex, and Antigravity.
 
 ```text
 plan create auth-refactor -codex
@@ -9,7 +32,7 @@ https://plans.inds.space/codex/auth-refactor
 
 The repository contains one Cloudflare Worker, one D1 database, one R2 bucket, a standalone CLI distributed through GitHub Releases, and the `planning-html` skill.
 
-## Commands
+### Commands
 
 ```bash
 plan create <name> -claude|codex|antigravity [--file <path>]
@@ -20,7 +43,7 @@ plan list [-claude|-codex|-antigravity]
 
 `create` and `update` discover `<name>.html` in the current directory. `--file` overrides discovery. Successful publication prints only the stable URL so agents can capture stdout directly. `list` prints every plan's agent, name, version, update time, and stable URL; pass an optional agent flag to filter the results.
 
-## Authentication
+### Authentication
 
 Protect the entire `plans.inds.space` hostname with a Cloudflare Access application. Add a Service Auth policy for CLI clients and provide its service token through environment variables:
 
@@ -33,7 +56,7 @@ Or copy `config.example.json` to `%APPDATA%\plan\config.json` on Windows or `~/.
 
 The Worker requires the Access identity header and has `workers.dev` plus preview URLs disabled. Access remains the security boundary; do not attach an unprotected route to this Worker.
 
-## Local development
+### Local development
 
 ```bash
 pnpm install
@@ -51,7 +74,7 @@ pnpm wrangler d1 migrations apply plans-db --local
 
 Requests made directly to local Wrangler must include a test `Cf-Access-Jwt-Assertion` header.
 
-## Provision and deploy
+### Provision and deploy
 
 1. Create `plans-db` with `pnpm wrangler d1 create plans-db` and replace the placeholder `database_id` in `wrangler.jsonc`.
 2. Create `plans-storage` with `pnpm wrangler r2 bucket create plans-storage`.
@@ -61,7 +84,7 @@ Requests made directly to local Wrangler must include a test `Cf-Access-Jwt-Asse
 
 Deployment changes live Cloudflare state and should be performed only after reviewing the account, hostname, Access policy, and generated dry-run bundle.
 
-## Skill
+### Skill
 
 Install the same skill into the supported agent homes:
 
